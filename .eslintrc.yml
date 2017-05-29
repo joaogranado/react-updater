@@ -1,0 +1,14 @@
+parser: babel-eslint
+
+env:
+  es6: true
+  jest: true
+  node: true
+
+plugins: [react]
+
+extends: [eslint:recommended, plugin:import/errors, plugin:react/recommended]
+
+rules:
+  prefer-arrow-callback: error
+  react/display-name: off

@@ -1,0 +1,40 @@
+{
+  "env": {
+    "commonjs": {
+      "plugins": ["transform-class-properties"],
+      "presets": [
+        ["env", {
+          "targets": { "ie": 9 }
+        }]
+      ]
+    },
+    "es": {
+      "plugins": ["transform-class-properties"],
+      "presets": [
+        ["env", {
+          "modules": false,
+          "targets": { "ie": 9 }
+        }]
+      ]
+    },
+    "test": {
+      "plugins": [
+        "transform-react-jsx-source",
+        "transform-react-jsx-self"
+      ],
+      "presets": [
+        ["env", {
+          "targets": { "node": "current" }
+        }]
+      ]
+    }
+  },
+  "plugins": [
+    "transform-class-properties",
+    ["transform-object-rest-spread", { "useBuiltIns": true }],
+    ["transform-react-jsx", { "useBuiltIns": true }]
+  ],
+  "presets": [
+    "react"
+  ]
+}
