@@ -36,16 +36,9 @@ if (process.env.NODE_ENV === 'production') {
     uglify({
       compress: {
         pure_getters: true,
-        screw_ie8: false,
         unsafe_comps: true,
         unsafe: true,
         warnings: false
-      },
-      mangle: {
-        screw_ie8: false
-      },
-      output: {
-        screw_ie8: false
       }
     })
   );
