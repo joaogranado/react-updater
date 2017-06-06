@@ -1,0 +1,75 @@
+{
+  "name": "react-updater",
+  "description": "Functional stateful components made easy",
+  "version": "1.0.0",
+  "browser": "dist/react-updater.js",
+  "main": "lib/index.js",
+  "module": "es/index.js",
+  "jsnext:main": "es/index.js",
+  "repository": "git@github.com:joaogranado/react-updater.git",
+  "author": "joaogranado <joao.mota.garcia@gmail.com> (https://github.com/joaogranado)",
+  "license": "MIT",
+  "keywords": [
+    "react",
+    "reactjs",
+    "updater",
+    "functional",
+    "stateful",
+    "state",
+    "composable",
+    "hoc"
+  ],
+  "files": [
+    "dist",
+    "lib",
+    "src",
+    "es"
+  ],
+  "scripts": {
+    "bundle-commonjs": "BABEL_ENV=commonjs babel src --out-dir lib",
+    "bundle-es": "BABEL_ENV=es babel src --out-dir es",
+    "bundle-umd-min": "BABEL_ENV=es NODE_ENV=production rollup -c -i src/index.js -o dist/react-updater.min.js",
+    "bundle-umd": "BABEL_ENV=es NODE_ENV=development rollup -c -i src/index.js -o dist/react-updater.js",
+    "bundle": "yarn run bundle-commonjs && yarn run bundle-es && yarn run bundle-umd-min && yarn run bundle-umd",
+    "clear": "rimraf lib es dist coverage",
+    "lint": "eslint src __tests__",
+    "prepublish": "yarn clear && yarn bundle",
+    "test": "jest --env=jsdom",
+    "test-watch": "yarn test -- --watch --notify"
+  },
+  "devDependencies": {
+    "babel-cli": "^6.24.1",
+    "babel-core": "^6.24.1",
+    "babel-eslint": "^7.2.3",
+    "babel-plugin-transform-class-properties": "^6.24.1",
+    "babel-plugin-transform-object-rest-spread": "^6.23.0",
+    "babel-plugin-transform-react-jsx": "^6.24.1",
+    "babel-plugin-transform-react-jsx-self": "^6.22.0",
+    "babel-plugin-transform-react-jsx-source": "^6.22.0",
+    "babel-preset-env": "^1.4.0",
+    "babel-preset-react": "^6.24.1",
+    "enzyme": "^2.8.2",
+    "eslint": "^3.19.0",
+    "eslint-plugin-import": "^2.2.0",
+    "eslint-plugin-react": "^6.10.3",
+    "gzip-size": "^3.0.0",
+    "jest": "^20.0.0",
+    "pretty-bytes": "^4.0.2",
+    "react": "^15.5.4",
+    "react-dom": "^15.5.4",
+    "react-test-renderer": "^15.5.4",
+    "rimraf": "^2.6.1",
+    "rollup": "^0.41.6",
+    "rollup-plugin-babel": "^2.7.1",
+    "rollup-plugin-commonjs": "^8.0.2",
+    "rollup-plugin-node-resolve": "^3.0.0",
+    "rollup-plugin-replace": "^1.1.1",
+    "rollup-plugin-uglify": "^1.0.2"
+  },
+  "dependencies": {
+    "is-plain-object": "^2.0.3"
+  },
+  "peerDependencies": {
+    "react": "^0.14.0 || ^15.0.0 || ^16.0.0-0"
+  }
+}
