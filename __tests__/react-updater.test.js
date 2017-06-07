@@ -47,9 +47,22 @@ describe('withUpdater', () => {
     it('it returns the same handler for different arguments', () => {
       const handler = () => {};
       const component = props => {
-        expect(props.handle(handler, 'foo')('bar')).toBe(
-          props.handle(handler, 'biz')('buz')
-        );
+        expect(
+          props.handle(handler, 'foo') === props.handle(handler, 'biz')
+        ).toBe(true);
+
+        return null;
+      };
+      const WithUpdater = withUpdater()(component);
+
+      mount(<WithUpdater />);
+    });
+
+    it('it returns different handlers', () => {
+      const handler1 = () => {};
+      const handler2 = () => {};
+      const component = props => {
+        expect(props.handle(handler1) !== props.handle(handler2)).toBe(true);
 
         return null;
       };
@@ -105,9 +118,31 @@ describe('withUpdater', () => {
 
       class Component extends React.Component {
         componentDidMount() {
-          expect(this.props.update(handler, 'foo')('bar')).toBe(
-            this.props.update(handler, 'biz')('buz')
-          );
+          expect(
+            this.props.update(handler, 'foo') ===
+              this.props.update(handler, 'biz')
+          ).toBe(true);
+        }
+
+        render() {
+          return null;
+        }
+      }
+
+      const WithUpdater = withUpdater()(Component);
+
+      mount(<WithUpdater />);
+    });
+
+    it('it returns different handlers', () => {
+      const handler1 = () => {};
+      const handler2 = () => {};
+
+      class Component extends React.Component {
+        componentDidMount() {
+          expect(
+            this.props.update(handler1) !== this.props.update(handler2)
+          ).toBe(true);
         }
 
         render() {
@@ -176,6 +211,26 @@ describe('withUpdater', () => {
       const wrapper = mount(<WithUpdater />);
 
       expect(wrapper.find('Passthrough').props().state).toEqual({ count: 1 });
+    });
+
+    it('updates the state accordingly', () => {
+      const increment = (state, increment) => state + increment;
+      const Passthrough = () => <div />;
+      class Component extends React.Component {
+        componentDidMount() {
+          this.props.update(increment, 1)();
+          this.props.update(increment, 2)();
+        }
+
+        render() {
+          return <Passthrough state={this.props.state} />;
+        }
+      }
+
+      const WithUpdater = withUpdater(0)(Component);
+      const wrapper = mount(<WithUpdater />);
+
+      expect(wrapper.find('Passthrough').props().state).toBe(3);
     });
   });
 });

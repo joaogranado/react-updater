@@ -19,8 +19,6 @@ const MAX_CALLBACKS_COUNT = 30;
 export default (initialState = null) => {
   return WrappedComponent => {
     return class EnhancedComponent extends Component {
-      cachedHandleCallbacks = {};
-      cachedUpdateCallbacks = {};
       cachedUpdateCount = 0;
       cachedHandleCount = 0;
       handleCallbacksRefs = new Map();
@@ -65,21 +63,20 @@ export default (initialState = null) => {
             );
           }
 
-          this.handleCallbacksRefs.set(fn, this.cachedHandleCount);
+          const handler = (...args) => fn(...handler.values, ...args);
+
+          handler.values = values;
+          this.handleCallbacksRefs.set(fn, handler);
           this.cachedHandleCount++;
+
+          return handler;
         }
 
-        const hash = this.handleCallbacksRefs.get(fn) + JSON.stringify(values);
+        const cached = this.handleCallbacksRefs.get(fn);
 
-        if (this.cachedHandleCallbacks[hash]) {
-          return this.cachedHandleCallbacks[hash];
-        }
+        cached.values = values;
 
-        this.cachedHandleCallbacks[hash] = (...args) => {
-          fn(...values, ...args);
-        };
-
-        return this.cachedHandleCallbacks[hash];
+        return cached;
       };
 
       /**
@@ -106,43 +103,42 @@ export default (initialState = null) => {
                 ' which results in a new handler on every render which can lead' +
                 ' to de-optimizations by components that rely on props equality.'
             );
-
-            return;
           }
 
-          this.updateCallbacksRefs.set(fn, this.cachedUpdateCount);
+          const updater = (...args) => {
+            const { values } = updater;
+
+            this.setState(state => {
+              if (typeof state[STATE_PROPERTY_NAME] === 'undefined') {
+                return fn(state, ...values, ...args);
+              }
+
+              return {
+                [STATE_PROPERTY_NAME]: fn(
+                  state[STATE_PROPERTY_NAME],
+                  ...values,
+                  ...args
+                )
+              };
+            });
+          };
+
+          updater.values = values;
+          this.updateCallbacksRefs.set(fn, updater);
           this.cachedUpdateCount++;
+
+          return updater;
         }
 
-        const hash = this.updateCallbacksRefs.get(fn) + JSON.stringify(values);
+        const cached = this.updateCallbacksRefs.get(fn);
 
-        if (this.cachedUpdateCallbacks[hash]) {
-          return this.cachedUpdateCallbacks[hash];
-        }
+        cached.values = values;
 
-        this.cachedUpdateCallbacks[hash] = (...args) => {
-          this.setState(state => {
-            if (typeof state[STATE_PROPERTY_NAME] === 'undefined') {
-              return fn(state, ...values, ...args);
-            }
-
-            return {
-              [STATE_PROPERTY_NAME]: fn(
-                state[STATE_PROPERTY_NAME],
-                ...values,
-                ...args
-              )
-            };
-          });
-        };
-
-        return this.cachedUpdateCallbacks[hash];
+        return cached;
       };
 
       componentWillUnmount() {
-        this.cachedHandleCallbacks = null;
         this.cachedHandleCount = null;
-        this.cachedUpdateCallbacks = null;
         this.cachedUpdateCount = null;
         this.handleCallbacksRefs = null;
         this.updateCallbacksRefs = null;
