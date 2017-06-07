@@ -45,7 +45,7 @@ This function wraps every callback handler. It takes a callback and returns a ne
 const onClick = (state, increment) => state + increment;
 const Component = props => <div onClick={props.update(onClick, 1)} />;
 
-export default withUpdater()(Component);
+export default withUpdater(0)(Component);
 ```
 
 Since this wraps the callback handler in a `setState` call, the handler should always return a new state which can be an object or a single value.
@@ -61,7 +61,7 @@ const Component = props => <div onClick={props.update(state => state + 1)} />;
 const onClick = state => state + 1;
 const Component = props => <div onClick={props.update(onClick)} />;
 
-export default withUpdater()(Component);
+export default withUpdater(0)(Component);
 ```
 
 #### `handle()`
