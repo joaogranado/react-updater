@@ -1,7 +1,7 @@
 {
   "name": "react-updater",
   "description": "Functional stateful components made easy",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "browser": "dist/react-updater.js",
   "main": "lib/index.js",
   "module": "es/index.js",
