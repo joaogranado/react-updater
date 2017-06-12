@@ -1,5 +1,8 @@
 parser: babel-eslint
 
+parserOptions:
+  sourceType: module
+
 env:
   es6: true
   jest: true
@@ -7,7 +10,7 @@ env:
 
 plugins: [react]
 
-extends: [eslint:recommended, plugin:import/errors, plugin:react/recommended]
+extends: [eslint:recommended, plugin:import/errors, plugin:import/warnings, plugin:react/recommended]
 
 rules:
   prefer-arrow-callback: error
