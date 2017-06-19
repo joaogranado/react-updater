@@ -21,8 +21,8 @@ export default (initialState = null) => {
     return class EnhancedComponent extends Component {
       cachedUpdateCount = 0;
       cachedHandleCount = 0;
-      handleCallbacksRefs = new Map();
-      updateCallbacksRefs = new Map();
+      handleCallbacksRefs = new WeakMap();
+      updateCallbacksRefs = new WeakMap();
 
       constructor(props) {
         super(props);
