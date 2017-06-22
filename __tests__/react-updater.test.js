@@ -197,16 +197,46 @@ describe('withUpdater', () => {
       wrapper.find('button').simulate('click');
     });
 
+    it('calls event persist() method', () => {
+      const persist = jest.fn();
+      const handler = (state, event) => event.target.value;
+      const WrappedComponent = props =>
+        <div>
+          <input onChange={props.update(handler)} />
+        </div>;
+      const WithUpdater = withUpdater('')(WrappedComponent);
+      const wrapper = mount(<WithUpdater />);
+
+      wrapper.find('input').simulate('change', { persist });
+
+      expect(persist).toHaveBeenCalledTimes(1);
+    });
+
+    it('calls event destructor() method', () => {
+      const destructor = jest.fn();
+      const handler = (state, event) => event.target.value;
+      const WrappedComponent = props =>
+        <div>
+          <input onChange={props.update(handler)} />
+        </div>;
+      const WithUpdater = withUpdater('')(WrappedComponent);
+      const wrapper = mount(<WithUpdater />);
+
+      wrapper.find('input').simulate('change', { destructor });
+
+      expect(destructor).toHaveBeenCalledTimes(1);
+    });
+
     it('updates the state accordingly if one of the handlers is removed', () => {
-      const bar = (state, increment) => state + increment;
+      const handler = (state, increment) => state + increment;
       const Passthrough = () => <div />;
       const WrappedComponent = props =>
         <div>
           {props.show
-            ? <div id={'bar'} onClick={props.update(bar, 2)} />
+            ? <div id={'bar'} onClick={props.update(handler, 2)} />
             : null}
 
-          <div id={'foo'} onClick={props.update(bar, 1)} />
+          <div id={'foo'} onClick={props.update(handler, 1)} />
 
           <Passthrough state={props.state} />
         </div>;

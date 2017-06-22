@@ -94,19 +94,37 @@ export default initialState => {
 
       update = this.createCallbackHandler('update', (callback, params) => {
         return (...args) => {
-          this.setState(state => {
-            if (typeof state[STATE_PROPERTY_NAME] === 'undefined') {
-              return callback(state, ...params, ...args);
-            }
+          let event;
 
-            return {
-              [STATE_PROPERTY_NAME]: callback(
-                state[STATE_PROPERTY_NAME],
-                ...params,
-                ...args
-              )
-            };
-          });
+          for (const arg of args) {
+            if (arg && typeof arg.persist === 'function') {
+              event = arg;
+              event.persist();
+
+              break;
+            }
+          }
+
+          this.setState(
+            state => {
+              if (typeof state[STATE_PROPERTY_NAME] === 'undefined') {
+                return callback(state, ...params, ...args);
+              }
+
+              return {
+                [STATE_PROPERTY_NAME]: callback(
+                  state[STATE_PROPERTY_NAME],
+                  ...params,
+                  ...args
+                )
+              };
+            },
+            () => {
+              if (event && typeof event.destructor === 'function') {
+                event.destructor();
+              }
+            }
+          );
         };
       });
 
