@@ -18,7 +18,7 @@ const STATE_PROPERTY_NAME = '@@STATE';
 
 export default initialState => {
   return WrappedComponent => {
-    return class EnhancedComponent extends Component {
+    class WithUpdater extends Component {
       memoizedCallbackHandlers = {};
 
       constructor(props) {
@@ -124,6 +124,15 @@ export default initialState => {
           />
         );
       }
-    };
+    }
+
+    if (process.env.NODE_ENV !== 'production') {
+      const wrappedComponentDisplayName =
+        WrappedComponent.displayName || WrappedComponent.name || 'Component';
+
+      WithUpdater.displayName = `withUpdater(${wrappedComponentDisplayName})`;
+    }
+
+    return WithUpdater;
   };
 };
