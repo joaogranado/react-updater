@@ -33,9 +33,17 @@ export default initialState => {
           : { [STATE_PROPERTY_NAME]: state };
       }
 
+      /**
+       * Clean up.
+       */
+
       componentWillUnmount() {
         this.memoizedCallbackHandlers = null;
       }
+
+      /**
+       * Create callback handler.
+       */
 
       createCallbackHandler = (name, createHandler) => {
         return (callback, ...params) => {
@@ -63,7 +71,7 @@ export default initialState => {
           // We need to ensure the handler is updated for different callbacks.
           // Since we check for the callback.name property, if another callback
           // with the same `name` were passed, the returned handler would the
-          // call the previous callback.
+          // call the previous callback so we need to invalidate the cache.
           if (this.memoizedCallbackHandlers[id].callback !== callback) {
             this.memoizedCallbackHandlers[id] = {
               callback,
@@ -96,6 +104,11 @@ export default initialState => {
         return (...args) => {
           let event;
 
+          // A synthetic event cannot be accessed in an asynchronous way -
+          // e.g. inside `setState()` - so we need to call `event.persist()`
+          // event to remove the synthetic event from the pool.
+          // We clean up the event manually when the callback of `setState()` is
+          // invoked.
           for (const arg of args) {
             if (arg && typeof arg.persist === 'function') {
               event = arg;
@@ -127,6 +140,10 @@ export default initialState => {
           );
         };
       });
+
+      /**
+       * Render.
+       */
 
       render() {
         const state = !(STATE_PROPERTY_NAME in this.state)
