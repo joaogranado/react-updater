@@ -10,6 +10,25 @@ import React, { Component } from 'react';
 import withUpdater from '../src/index';
 
 describe('withUpdater', () => {
+  it('sets the display name according to the component displayName', () => {
+    const component = () => {};
+    component.displayName = 'foo';
+
+    expect(withUpdater()(component).displayName).toBe('withUpdater(foo)');
+  });
+
+  it('sets the display name according to the default function name', () => {
+    const foo = () => null;
+
+    expect(withUpdater()(foo).displayName).toBe('withUpdater(foo)');
+  });
+
+  it('sets the display name to be `Component`', () => {
+    expect(withUpdater()(() => null).displayName).toBe(
+      'withUpdater(Component)'
+    );
+  });
+
   it('passes the owner props if the initial state is a function', () => {
     const initialState = jest.fn();
     const WithUpdater = withUpdater(initialState)(() => null);
