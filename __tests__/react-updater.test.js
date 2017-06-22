@@ -5,7 +5,8 @@
  */
 
 import { mount } from 'enzyme';
-import React from 'react';
+import { noop } from '../src/utils';
+import React, { Component } from 'react';
 import withUpdater from '../src/index';
 
 describe('withUpdater', () => {
@@ -18,149 +19,106 @@ describe('withUpdater', () => {
     expect(initialState).toHaveBeenCalledWith({ foo: 'bar' });
   });
 
+  it('cleans up the memoized callback handlers when the component unmounts', () => {
+    const handler = () => {};
+    const Component = props => {
+      props.update(handler);
+
+      return null;
+    };
+    const WithUpdater = withUpdater()(Component);
+    const wrapper = mount(<WithUpdater foo={'bar'} />);
+
+    expect(wrapper.node.memoizedCallbackHandlers).toMatchSnapshot(
+      'memoizedCallbackHandlers collection'
+    );
+
+    wrapper.unmount();
+
+    expect(wrapper.node.memoizedCallbackHandlers).toBeNull();
+  });
+
   describe('handle', () => {
-    it('calls console.error if the maximum number of callbacks is exceeded', () => {
-      /* eslint-disable no-console */
-      const error = console.error;
-      console.error = jest.fn();
-      /* eslint-enable no-console */
-
-      const component = props => {
-        for (let i = 0; i < 31; i++) {
-          props.handle(() => {});
-        }
-
-        return null;
-      };
-      const WithUpdater = withUpdater()(component);
-
-      mount(<WithUpdater />);
-
-      /* eslint-disable no-console */
-      expect(console.error).toHaveBeenCalledTimes(1);
-      expect(console.error.mock.calls[0][0]).toMatchSnapshot();
-
-      console.error = error;
-      /* eslint-enable no-console */
-    });
-
-    it('it returns the same handler for different arguments', () => {
-      const handler = () => {};
-      const component = props => {
-        expect(
-          props.handle(handler, 'foo') === props.handle(handler, 'biz')
-        ).toBe(true);
-
-        return null;
-      };
-      const WithUpdater = withUpdater()(component);
-
-      mount(<WithUpdater />);
-    });
-
-    it('it returns different handlers', () => {
-      const handler1 = () => {};
-      const handler2 = () => {};
-      const component = props => {
-        expect(props.handle(handler1) !== props.handle(handler2)).toBe(true);
-
-        return null;
-      };
-      const WithUpdater = withUpdater()(component);
-
-      mount(<WithUpdater />);
-    });
-
     it('calls the given handler with the given arguments', () => {
       const handler = jest.fn();
-      const component = props => {
-        props.handle(handler, 'foo')('bar');
+      const WrappedComponent = props =>
+        <button onClick={() => props.handle(handler, 'foo')('bar')} />;
 
-        return null;
-      };
-      const WithUpdater = withUpdater()(component);
+      const WithUpdater = withUpdater(0)(WrappedComponent);
+      const wrapper = mount(<WithUpdater />);
 
-      mount(<WithUpdater />);
+      wrapper.find('button').simulate('click');
 
-      expect(handler).toHaveBeenCalledWith('foo', 'bar');
+      expect(handler.mock.calls[0][0]).toBe('foo');
+      expect(handler.mock.calls[0][1]).toBe('bar');
     });
   });
 
   describe('update', () => {
-    it('calls console.error if the maximum number of callbacks is exceeded', () => {
+    it('calls console.warning if the given callback is a anonymous function', () => {
       /* eslint-disable no-console */
-      const error = console.error;
-      console.error = jest.fn();
+      const warning = console.warning;
+      console.warning = jest.fn();
       /* eslint-enable no-console */
 
-      const component = props => {
-        for (let i = 0; i < 31; i++) {
-          props.update(() => {});
-        }
+      const Component = props => {
+        props.update(() => {});
 
         return null;
       };
-      const WithUpdater = withUpdater()(component);
+      const WithUpdater = withUpdater()(Component);
 
       mount(<WithUpdater />);
 
       /* eslint-disable no-console */
-      expect(console.error).toHaveBeenCalledTimes(1);
-      expect(console.error.mock.calls[0][0]).toMatchSnapshot();
+      expect(console.warning).toHaveBeenCalledTimes(1);
+      expect(console.warning.mock.calls[0][0]).toMatchSnapshot(
+        'Anonymous function warning'
+      );
 
-      console.error = error;
-
+      console.warning = warning;
       /* eslint-enable no-console */
     });
 
-    it('it returns the same handler for different arguments', () => {
-      const handler = () => {};
+    it('returns a no-op function if the given callback is a anonymous function', () => {
+      /* eslint-disable no-console */
+      const warning = console.warning;
+      console.warning = jest.fn();
+      /* eslint-enable no-console */
 
-      class Component extends React.Component {
-        componentDidMount() {
-          expect(
-            this.props.update(handler, 'foo') ===
-              this.props.update(handler, 'biz')
-          ).toBe(true);
-        }
+      const Component = props => {
+        expect(props.update(() => {})).toBe(noop);
 
-        render() {
-          return null;
-        }
-      }
-
+        return null;
+      };
       const WithUpdater = withUpdater()(Component);
 
       mount(<WithUpdater />);
-    });
 
-    it('it returns different handlers', () => {
-      const handler1 = () => {};
-      const handler2 = () => {};
-
-      class Component extends React.Component {
-        componentDidMount() {
-          expect(
-            this.props.update(handler1) !== this.props.update(handler2)
-          ).toBe(true);
-        }
-
-        render() {
-          return null;
-        }
-      }
-
-      const WithUpdater = withUpdater()(Component);
-
-      mount(<WithUpdater />);
+      /* eslint-disable no-console */
+      console.warning = warning;
+      /* eslint-enable no-console */
     });
 
     it('calls the given handler with the initial state and the given arguments', () => {
       const handler = jest.fn();
+      const WrappedComponent = props =>
+        <button onClick={() => props.update(handler, 'foo')('bar')} />;
 
-      class Component extends React.Component {
-        componentDidMount() {
-          this.props.update(handler, 'foo')('bar');
+      const WithUpdater = withUpdater(0)(WrappedComponent);
+      const wrapper = mount(<WithUpdater />);
+
+      wrapper.find('button').simulate('click');
+
+      expect(handler.mock.calls[0][0]).toBe(0);
+      expect(handler.mock.calls[0][1]).toBe('foo');
+      expect(handler.mock.calls[0][2]).toBe('bar');
+    });
+
+    it('preserves the referencial identity on subsequent renders', () => {
+      class Passthrough extends Component {
+        componentWillReceiveProps(props) {
+          expect(props.foo).toBe(this.props.foo);
         }
 
         render() {
@@ -168,18 +126,198 @@ describe('withUpdater', () => {
         }
       }
 
-      const WithUpdater = withUpdater(0)(Component);
+      const handler = () => {};
+      const WrappedComponent = props =>
+        <Passthrough foo={props.update(handler)} />;
+      const WithUpdater = withUpdater(0)(WrappedComponent);
+      const wrapper = mount(<WithUpdater />);
 
-      mount(<WithUpdater />);
+      wrapper.update();
+    });
 
-      expect(handler).toHaveBeenCalledWith(0, 'foo', 'bar');
+    it('preserves the referencial identity of the handler if one of the handlers is removed', () => {
+      class Passthrough extends Component {
+        componentWillReceiveProps(props) {
+          expect(props.foo).toBe(this.props.foo);
+        }
+
+        render() {
+          return null;
+        }
+      }
+
+      const bar = () => {};
+      const WrappedComponent = props =>
+        <div>
+          {props.show ? <div onClick={props.update(bar)} /> : null}
+
+          <Passthrough foo={props.update(bar)} />
+        </div>;
+      const WithUpdater = withUpdater(0)(WrappedComponent);
+
+      class Wrapper extends Component {
+        state = { show: true };
+
+        onClick = () => {
+          this.setState(({ show }) => ({ show: !show }));
+        };
+
+        render() {
+          return (
+            <div>
+              <button onClick={this.onClick} />
+              <WithUpdater show={this.state.show} />
+            </div>
+          );
+        }
+      }
+
+      const wrapper = mount(<Wrapper />);
+
+      wrapper.find('button').simulate('click');
+      wrapper.find('button').simulate('click');
+    });
+
+    it('updates the state accordingly if one of the handlers is removed', () => {
+      const bar = (state, increment) => state + increment;
+      const Passthrough = () => <div />;
+      const WrappedComponent = props =>
+        <div>
+          {props.show
+            ? <div id={'bar'} onClick={props.update(bar, 2)} />
+            : null}
+
+          <div id={'foo'} onClick={props.update(bar, 1)} />
+
+          <Passthrough state={props.state} />
+        </div>;
+      const WithUpdater = withUpdater(0)(WrappedComponent);
+
+      class Wrapper extends Component {
+        state = { show: true };
+
+        onClick = () => {
+          this.setState(({ show }) => ({ show: !show }));
+        };
+
+        render() {
+          return (
+            <div>
+              <button onClick={this.onClick} />
+              <WithUpdater show={this.state.show} />
+            </div>
+          );
+        }
+      }
+
+      const wrapper = mount(<Wrapper />);
+
+      expect(wrapper.find('Passthrough').props().state).toBe(0);
+
+      wrapper.find('#foo').simulate('click');
+      expect(wrapper.find('Passthrough').props().state).toBe(1);
+
+      wrapper.find('#bar').simulate('click');
+      expect(wrapper.find('Passthrough').props().state).toBe(3);
+
+      wrapper.find('button').simulate('click');
+      wrapper.find('#foo').simulate('click');
+      expect(wrapper.find('Passthrough').props().state).toBe(4);
+
+      wrapper.find('button').simulate('click');
+      wrapper.find('#foo').simulate('click');
+      expect(wrapper.find('Passthrough').props().state).toBe(5);
+
+      wrapper.find('#bar').simulate('click');
+      expect(wrapper.find('Passthrough').props().state).toBe(7);
+    });
+
+    it('does not preserve the referencial identity of the handler on subsequent renders if the callback handler changes', () => {
+      class Passthrough extends Component {
+        componentWillReceiveProps(props) {
+          expect(props.foo).not.toBe(this.props.foo);
+        }
+
+        render() {
+          return null;
+        }
+      }
+      const WrappedComponent = props =>
+        <Passthrough foo={props.update(props.handler)} />;
+
+      const WithUpdater = withUpdater(0)(WrappedComponent);
+
+      class Wrapper extends Component {
+        state = { handler: () => {} };
+
+        updateHandler = () => {
+          this.setState({ handler: () => {} });
+        };
+
+        render() {
+          return (
+            <div>
+              <button onClick={this.updateHandler} />
+
+              <WithUpdater handler={this.state.handler} />
+            </div>
+          );
+        }
+      }
+
+      const wrapper = mount(<Wrapper />);
+
+      wrapper.find('button').simulate('click');
+    });
+
+    it('updates the state if the handler changes', () => {
+      const Passthrough = () => <div />;
+      const WrappedComponent = props =>
+        <div>
+          <button id={'foo'} onClick={props.update(props.handler)} />
+
+          <Passthrough state={props.state} />
+        </div>;
+      const WithUpdater = withUpdater(0)(WrappedComponent);
+
+      class Wrapper extends Component {
+        state = { handler: state => state + 1 };
+
+        updateHandler = () => {
+          this.setState({ handler: state => state + 2 });
+        };
+
+        render() {
+          return (
+            <div>
+              <button id={'bar'} onClick={this.updateHandler} />
+
+              <WithUpdater handler={this.state.handler} />
+            </div>
+          );
+        }
+      }
+
+      const wrapper = mount(<Wrapper />);
+
+      expect(wrapper.find('Passthrough').props().state).toBe(0);
+
+      wrapper.find('#foo').simulate('click');
+      expect(wrapper.find('Passthrough').props().state).toBe(1);
+
+      wrapper.find('#bar').simulate('click');
+      expect(wrapper.find('Passthrough').props().state).toBe(1);
+
+      wrapper.find('#foo').simulate('click');
+      expect(wrapper.find('Passthrough').props().state).toBe(3);
     });
 
     it('updates the state if it is not an object', () => {
       const Passthrough = () => <div />;
+      const handler = state => state + 1;
       class Component extends React.Component {
         componentDidMount() {
-          this.props.update(state => state + 1)();
+          this.props.update(handler)();
         }
 
         render() {
@@ -195,11 +333,12 @@ describe('withUpdater', () => {
 
     it('updates the state if it is an object', () => {
       const Passthrough = () => <div />;
+      const handler = state => ({
+        count: state.count + 1
+      });
       class Component extends React.Component {
         componentDidMount() {
-          this.props.update(state => ({
-            count: state.count + 1
-          }))();
+          this.props.update(handler)();
         }
 
         render() {
@@ -216,21 +355,32 @@ describe('withUpdater', () => {
     it('updates the state accordingly', () => {
       const increment = (state, increment) => state + increment;
       const Passthrough = () => <div />;
-      class Component extends React.Component {
-        componentDidMount() {
-          this.props.update(increment, 1)();
-          this.props.update(increment, 2)();
-        }
+      const WrappedComponent = props =>
+        <div>
+          <button id={'foo'} onClick={props.update(increment, 1)} />
+          <button id={'bar'} onClick={props.update(increment, 2)} />
+          <button id={'biz'} onClick={props.update(increment, 3)} />
 
-        render() {
-          return <Passthrough state={this.props.state} />;
-        }
-      }
+          <Passthrough state={props.state} />
+        </div>;
 
-      const WithUpdater = withUpdater(0)(Component);
+      const WithUpdater = withUpdater(0)(WrappedComponent);
       const wrapper = mount(<WithUpdater />);
 
+      wrapper.find('#foo').simulate('click');
+      expect(wrapper.find('Passthrough').props().state).toBe(1);
+
+      wrapper.find('#bar').simulate('click');
       expect(wrapper.find('Passthrough').props().state).toBe(3);
+
+      wrapper.find('#bar').simulate('click');
+      expect(wrapper.find('Passthrough').props().state).toBe(5);
+
+      wrapper.find('#biz').simulate('click');
+      expect(wrapper.find('Passthrough').props().state).toBe(8);
+
+      wrapper.find('#foo').simulate('click');
+      expect(wrapper.find('Passthrough').props().state).toBe(9);
     });
   });
 });

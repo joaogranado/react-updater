@@ -50,11 +50,11 @@ export default withUpdater(0)(Component);
 
 Since this wraps the callback handler in a `setState` call, the handler should always return a new state which can be an object or a single value.
 
-**Important:** `update` memoizes up to **30** handlers and returns the same reference. This avoids a common pitfall associated with components that rely on props equality by using `shouldComponentUpdate` which can lead to de-optimizations because `shouldComponentUpdate` will return `true` every time since `props.onClick !== nexProps.onClick`. This way `withUpdater` must ensure it always returns the same reference for each handler.
+**Important:** `update` memoizes the given handlers and returns the same reference. This avoids a common pitfall associated with components that rely on props equality by using `shouldComponentUpdate` which can lead to de-optimizations because `shouldComponentUpdate` will return `true` every time since `props.onClick !== nexProps.onClick`. This way `withUpdater` must ensure it always returns the same reference for each handler.
 
 ```js
 // Bad.
-// This will log a error message after 30 calls.
+// This will log a warning message since the given handler is a anonymous function.
 const Component = props => <div onClick={props.update(state => state + 1)} />;
 
 // Good.
@@ -88,7 +88,7 @@ export default withUpdater()(Component);
 ```
 
 #### `state`
-The main difference here is that you can pass any value to the initial state and it will be handled accordingly. If you pass an object as the initial state, the updater will handle it according to the default `setState()` behavior. If you pass a function to the initial state it will be provided with the owner props that can be used to define the initial state.
+You can pass any value to the initial state and it will be handled accordingly. If you pass an object as the initial state, the updater will handle it according to the default `setState()` behavior. If you pass a function to the initial state it will be provided with the owner props that can be used to define the initial state.
 
 **Arbitrary value**
 
