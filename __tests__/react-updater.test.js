@@ -74,10 +74,10 @@ describe('withUpdater', () => {
   });
 
   describe('update', () => {
-    it('calls console.warning if the given callback is a anonymous function', () => {
+    it('calls console.warn if the given callback is a anonymous function', () => {
       /* eslint-disable no-console */
-      const warning = console.warning;
-      console.warning = jest.fn();
+      const warn = console.warn;
+      console.warn = jest.fn();
       /* eslint-enable no-console */
 
       const Component = props => {
@@ -90,19 +90,19 @@ describe('withUpdater', () => {
       mount(<WithUpdater />);
 
       /* eslint-disable no-console */
-      expect(console.warning).toHaveBeenCalledTimes(1);
-      expect(console.warning.mock.calls[0][0]).toMatchSnapshot(
-        'Anonymous function warning'
+      expect(console.warn).toHaveBeenCalledTimes(1);
+      expect(console.warn.mock.calls[0][0]).toMatchSnapshot(
+        'Anonymous function warn'
       );
 
-      console.warning = warning;
+      console.warn = warn;
       /* eslint-enable no-console */
     });
 
     it('returns a no-op function if the given callback is a anonymous function', () => {
       /* eslint-disable no-console */
-      const warning = console.warning;
-      console.warning = jest.fn();
+      const warn = console.warn;
+      console.warn = jest.fn();
       /* eslint-enable no-console */
 
       const Component = props => {
@@ -115,15 +115,29 @@ describe('withUpdater', () => {
       mount(<WithUpdater />);
 
       /* eslint-disable no-console */
-      console.warning = warning;
+      console.warn = warn;
       /* eslint-enable no-console */
+    });
+
+    it('handles undefined state returned from the state updater', () => {
+      const handler = () => {};
+      const Passthrough = () => <div />;
+      const WrappedComponent = props =>
+        <div>
+          <button onClick={props.update(handler)} />;
+          <Passthrough state={props.state} />
+        </div>;
+      const WithUpdater = withUpdater()(WrappedComponent);
+      const wrapper = mount(<WithUpdater />);
+
+      wrapper.find('button').simulate('click');
+      expect(wrapper.find('Passthrough').props().state).toBeUndefined();
     });
 
     it('calls the given handler with the initial state and the given arguments', () => {
       const handler = jest.fn();
       const WrappedComponent = props =>
         <button onClick={() => props.update(handler, 'foo')('bar')} />;
-
       const WithUpdater = withUpdater(0)(WrappedComponent);
       const wrapper = mount(<WithUpdater />);
 

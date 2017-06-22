@@ -1,6 +1,6 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`Anonymous function warning 1`] = `"Callbacks handlers defined with anonymous functions should be avoided. This can lead to de-optimisations on components that rely on props equality."`;
+exports[`Anonymous function warn 1`] = `"Callbacks handlers defined with anonymous functions should be avoided. This can lead to de-optimisations on components that rely on props equality."`;
 
 exports[`memoizedCallbackHandlers collection 1`] = `
 Object {

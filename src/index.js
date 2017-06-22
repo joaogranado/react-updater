@@ -41,7 +41,7 @@ export default initialState => {
         return (callback, ...params) => {
           if (process.env.NODE_ENV !== 'production' && !callback.name) {
             // eslint-disable-next-line no-console
-            console.warning(
+            console.warn(
               'Callbacks handlers defined with anonymous functions should be' +
                 ' avoided. This can lead to de-optimisations on components' +
                 ' that rely on props equality.'
@@ -107,7 +107,7 @@ export default initialState => {
 
           this.setState(
             state => {
-              if (typeof state[STATE_PROPERTY_NAME] === 'undefined') {
+              if (!(STATE_PROPERTY_NAME in state)) {
                 return callback(state, ...params, ...args);
               }
 
@@ -129,7 +129,7 @@ export default initialState => {
       });
 
       render() {
-        const state = typeof this.state[STATE_PROPERTY_NAME] === 'undefined'
+        const state = !(STATE_PROPERTY_NAME in this.state)
           ? this.state
           : this.state[STATE_PROPERTY_NAME];
 
