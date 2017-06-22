@@ -1,5 +1,12 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`withUpdater handle calls console.error if the maximum number of callbacks is exceeded 1`] = `"Maximum \\"handle\\" callbacks size exceeded. This probably is because you are creating inline handlers inside the render method, which results in a new handler on every render which can lead to de-optimizations by components that rely on props equality."`;
+exports[`Anonymous function warning 1`] = `"Callbacks handlers defined with anonymous functions should be avoided. This can lead to de-optimisations on components that rely on props equality."`;
 
-exports[`withUpdater update calls console.error if the maximum number of callbacks is exceeded 1`] = `"Maximum \\"update\\" callbacks size exceeded. This probably is because you are creating inline handlers inside the render method, which results in a new handler on every render which can lead to de-optimizations by components that rely on props equality."`;
+exports[`memoizedCallbackHandlers collection 1`] = `
+Object {
+  "update[Function handler][]": Object {
+    "callback": [Function],
+    "handler": [Function],
+  },
+}
+`;

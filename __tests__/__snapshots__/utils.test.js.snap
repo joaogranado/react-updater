@@ -1,0 +1,3 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`utils stringify stringifies an object containing a function 1`] = `"{\\"foo\\":\\"[Function foo]\\",\\"bar\\":\\"[Function bar]\\",\\"biz\\":\\"foo\\"}"`;
