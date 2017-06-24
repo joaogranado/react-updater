@@ -1,10 +1,12 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`Anonymous function warn 1`] = `"Callbacks handlers defined with anonymous functions should be avoided. This can lead to de-optimisations on components that rely on props equality."`;
+exports[`Anonymous function warn 1`] = `"Callbacks handlers defined with anonymous functions should be avoided. This can lead to de-optimizations on components that rely on props equality. If you are seeing this message on older browsers and you are not passing an anonymous function you need to use a polyfill for Function.name."`;
+
+exports[`Non-function callback error 1`] = `"The given callback of type object should be a function."`;
 
 exports[`memoizedCallbackHandlers collection 1`] = `
 Object {
-  "update[Function handler][]": Object {
+  "update[handler () => {}][]": Object {
     "callback": [Function],
     "handler": [Function],
   },

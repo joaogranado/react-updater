@@ -3,8 +3,7 @@
  */
 
 import React, { Component } from 'react';
-import { noop, stringify, stringifyFunction } from './utils';
-import isPlainObject from 'is-plain-object';
+import { noop, stringify } from './utils';
 
 /**
  * State property name.
@@ -28,7 +27,7 @@ export default initialState => {
           ? initialState(props)
           : initialState;
 
-        this.state = isPlainObject(state)
+        this.state = Object.prototype.toString.call(state) === '[object Object]'
           ? state
           : { [STATE_PROPERTY_NAME]: state };
       }
@@ -47,23 +46,42 @@ export default initialState => {
 
       createCallbackHandler = (name, createHandler) => {
         return (callback, ...params) => {
-          if (process.env.NODE_ENV !== 'production' && !callback.name) {
-            // eslint-disable-next-line no-console
-            console.warn(
-              'Callbacks handlers defined with anonymous functions should be' +
-                ' avoided. This can lead to de-optimisations on components' +
-                ' that rely on props equality.'
-            );
+          if (process.env.NODE_ENV !== 'production') {
+            if (typeof callback !== 'function') {
+              // eslint-disable-next-line no-console
+              console.error(
+                `The given callback of type ${typeof callback}` +
+                  ' should be a function.'
+              );
 
-            return noop;
+              return noop;
+            }
+
+            if (!callback.name) {
+              // eslint-disable-next-line no-console
+              console.warn(
+                'Callbacks handlers defined with anonymous functions should' +
+                  ' be avoided. This can lead to de-optimizations on' +
+                  ' components that rely on props equality. If you are seeing' +
+                  ' this message on older browsers and you are not passing an' +
+                  ' anonymous function you need to use a polyfill for' +
+                  ' Function.name.'
+              );
+            }
           }
 
-          const id = name + stringifyFunction(callback) + stringify(params);
+          const callbackName = callback.name || '';
+          const stringifiedCallback = Function.prototype.toString.call(
+            callback
+          );
+          const hash = `${name}[${callbackName} ${stringifiedCallback}]${stringify(
+            params
+          )}`;
 
-          if (!this.memoizedCallbackHandlers[id]) {
+          if (!this.memoizedCallbackHandlers[hash]) {
             const handler = createHandler(callback, params);
 
-            this.memoizedCallbackHandlers[id] = { callback, handler };
+            this.memoizedCallbackHandlers[hash] = { callback, handler };
 
             return handler;
           }
@@ -72,14 +90,14 @@ export default initialState => {
           // Since we check for the callback.name property, if another callback
           // with the same `name` were passed, the returned handler would the
           // call the previous callback so we need to invalidate the cache.
-          if (this.memoizedCallbackHandlers[id].callback !== callback) {
-            this.memoizedCallbackHandlers[id] = {
+          if (this.memoizedCallbackHandlers[hash].callback !== callback) {
+            this.memoizedCallbackHandlers[hash] = {
               callback,
               handler: createHandler(callback, params)
             };
           }
 
-          return this.memoizedCallbackHandlers[id].handler;
+          return this.memoizedCallbackHandlers[hash].handler;
         };
       };
 
