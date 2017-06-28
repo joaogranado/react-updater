@@ -9,7 +9,9 @@ describe('utils', () => {
     it('stringifies an object containing a function', () => {
       const bar = () => {};
 
-      expect(stringify({ foo: () => {}, bar, biz: 'foo' })).toMatchSnapshot();
+      expect(
+        stringify(['foo', { foo: () => {}, bar, biz: 'foo' }])
+      ).toMatchSnapshot();
     });
   });
 

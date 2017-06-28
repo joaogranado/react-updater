@@ -74,6 +74,51 @@ describe('withUpdater', () => {
   });
 
   describe('update', () => {
+    it('calls console.warn if the given callback is not a function', () => {
+      /* eslint-disable no-console */
+      const error = console.error;
+      console.error = jest.fn();
+      /* eslint-enable no-console */
+
+      const Component = props => {
+        props.update(null);
+
+        return null;
+      };
+      const WithUpdater = withUpdater()(Component);
+
+      mount(<WithUpdater />);
+
+      /* eslint-disable no-console */
+      expect(console.error).toHaveBeenCalledTimes(1);
+      expect(console.error.mock.calls[0][0]).toMatchSnapshot(
+        'Non-function callback error'
+      );
+
+      console.error = error;
+      /* eslint-enable no-console */
+    });
+
+    it('returns a no-op function if the given callback is not a function', () => {
+      /* eslint-disable no-console */
+      const error = console.error;
+      console.error = jest.fn();
+      /* eslint-enable no-console */
+
+      const Component = props => {
+        expect(props.update(null)).toBe(noop);
+
+        return null;
+      };
+      const WithUpdater = withUpdater()(Component);
+
+      mount(<WithUpdater />);
+
+      /* eslint-disable no-console */
+      console.error = error;
+      /* eslint-enable no-console */
+    });
+
     it('calls console.warn if the given callback is a anonymous function', () => {
       /* eslint-disable no-console */
       const warn = console.warn;
@@ -95,26 +140,6 @@ describe('withUpdater', () => {
         'Anonymous function warn'
       );
 
-      console.warn = warn;
-      /* eslint-enable no-console */
-    });
-
-    it('returns a no-op function if the given callback is a anonymous function', () => {
-      /* eslint-disable no-console */
-      const warn = console.warn;
-      console.warn = jest.fn();
-      /* eslint-enable no-console */
-
-      const Component = props => {
-        expect(props.update(() => {})).toBe(noop);
-
-        return null;
-      };
-      const WithUpdater = withUpdater()(Component);
-
-      mount(<WithUpdater />);
-
-      /* eslint-disable no-console */
       console.warn = warn;
       /* eslint-enable no-console */
     });

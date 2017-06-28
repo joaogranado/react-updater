@@ -9,16 +9,7 @@ export const noop = () => {};
  */
 
 export const stringify = value =>
-  JSON.stringify(value, (key, value) => {
-    if (typeof value === 'function') {
-      return stringifyFunction(value);
-    }
-
-    return value;
-  });
-
-/**
- * Export `stringifyFunction`.
- */
-
-export const stringifyFunction = fn => `[Function ${fn.name}]`;
+  JSON.stringify(
+    value,
+    (key, value) => (typeof value === 'function' ? value.toString() : value)
+  );
