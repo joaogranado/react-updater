@@ -18,7 +18,7 @@ const STATE_PROPERTY_NAME = '@@STATE';
 export default initialState => {
   return WrappedComponent => {
     class WithUpdater extends Component {
-      memoizedCallbackHandlers = {};
+      memoizedCallbackHandlers = new WeakMap();
 
       constructor(props) {
         super(props);
@@ -70,34 +70,21 @@ export default initialState => {
             }
           }
 
-          const callbackName = callback.name || '';
-          const stringifiedCallback = Function.prototype.toString.call(
-            callback
-          );
-          const hash = `${name}[${callbackName} ${stringifiedCallback}]${stringify(
-            params
-          )}`;
+          if (!this.memoizedCallbackHandlers.has(callback)) {
+            const handler = createHandler(callback);
 
-          if (!this.memoizedCallbackHandlers[hash]) {
-            const handler = createHandler(callback, params);
+            this.memoizedCallbackHandlers.set(callback, handler);
 
-            this.memoizedCallbackHandlers[hash] = { callback, handler };
+            handler.data = params;
 
             return handler;
           }
 
-          // We need to ensure the handler is updated for different callbacks.
-          // Since we check for the callback.name property, if another callback
-          // with the same `name` were passed, the returned handler would the
-          // call the previous callback so we need to invalidate the cache.
-          if (this.memoizedCallbackHandlers[hash].callback !== callback) {
-            this.memoizedCallbackHandlers[hash] = {
-              callback,
-              handler: createHandler(callback, params)
-            };
-          }
+          const handler = this.memoizedCallbackHandlers.get(callback);
 
-          return this.memoizedCallbackHandlers[hash].handler;
+          handler.data = params;
+
+          return handler;
         };
       };
 
@@ -106,8 +93,10 @@ export default initialState => {
        * additional arguments.
        */
 
-      handle = this.createCallbackHandler('handle', (callback, params) => {
-        return (...args) => callback(...params, ...args);
+      handle = this.createCallbackHandler('handle', callback => {
+        const handler = (...args) => callback(...handler.data, ...args);
+
+        return handler;
       });
 
       /**
@@ -118,8 +107,8 @@ export default initialState => {
        * value.
        */
 
-      update = this.createCallbackHandler('update', (callback, params) => {
-        return (...args) => {
+      update = this.createCallbackHandler('update', callback => {
+        const handler = (...args) => {
           let event;
 
           // A synthetic event cannot be accessed in an asynchronous way -
@@ -139,13 +128,13 @@ export default initialState => {
           this.setState(
             state => {
               if (!(STATE_PROPERTY_NAME in state)) {
-                return callback(state, ...params, ...args);
+                return callback(state, ...handler.data, ...args);
               }
 
               return {
                 [STATE_PROPERTY_NAME]: callback(
                   state[STATE_PROPERTY_NAME],
-                  ...params,
+                  ...handler.data,
                   ...args
                 )
               };
@@ -157,6 +146,8 @@ export default initialState => {
             }
           );
         };
+
+        return handler;
       });
 
       /**
