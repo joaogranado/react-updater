@@ -5,7 +5,6 @@
  */
 
 import { mount } from 'enzyme';
-import { noop } from '../src/utils';
 import React, { Component } from 'react';
 import withUpdater from '../src/index';
 
@@ -106,7 +105,7 @@ describe('withUpdater', () => {
       /* eslint-enable no-console */
 
       const Component = props => {
-        expect(props.update(null)).toBe(noop);
+        expect(props.update(null)()).toBeUndefined();
 
         return null;
       };

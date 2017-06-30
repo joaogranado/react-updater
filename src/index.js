@@ -3,7 +3,6 @@
  */
 
 import React, { Component } from 'react';
-import { noop, stringify } from './utils';
 
 /**
  * State property name.
@@ -54,7 +53,7 @@ export default initialState => {
                   ' should be a function.'
               );
 
-              return noop;
+              return () => {};
             }
 
             if (!callback.name) {
