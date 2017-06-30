@@ -85,18 +85,47 @@ export default withUpdater(0)(Component);
 
 Since this wraps the callback handler in a `setState` call, the handler should always return a new state which can be an object or a single value.
 
-**Important:** `update` memoizes the given state updaters in order to avoid a common pitfall associated with components that rely on props equality by using `shouldComponentUpdate`. Using classes this is avoided by using `this.onClick`, but if you pass inline functions as a state updater, `update()` will return a new callback handler. This can lead to de-optimizations because `shouldComponentUpdate` will return `true` on every render since `props.onClick !== nexProps.onClick`. This way we can ensure it will always returns the same reference for each handler.
+**Important:** `update` memoizes the given state updaters in order to avoid a common pitfall associated with components that rely on props equality by using `shouldComponentUpdate`. This can be avoided with the class syntax by using `this.onClick`, but if you pass inline functions as a state updater, `update()` will return a new callback handler. This can lead to de-optimizations because `shouldComponentUpdate` will return `true` on every render since `props.onClick !== nexProps.onClick`.
+
+If you you register the same callback with different data multiple times, ince the `update()` function memoizes the state updater and attaches the additional data to the new callback handler, so the expected parameters will be the ones passed on the last call of `update()`. To avoid this limitation consider the following example:
 
 ```js
-// Bad.
-// This will log a warning message since the given handler is a anonymous function.
-const Component = props => <div onClick={props.update(state => state + 1)} />;
+// If you click on the `#first` button the final state will be "2" instead of "1",
+// since the final value corresponds to the last call of `update()` for the same
+// state updater, so the `step` parameter will be "2".
+const increment = (state, step) => state + step;
 
-// Good.
-const onClick = state => state + 1;
-const Component = props => <div onClick={props.update(onClick)} />;
+withUpdater(0)(props => (
+  <div>
+    <h1>{props.state}</h1>
+    <button id={'first'} onClick={props.update(increment, 1)} />
+    <button id={'second'} onClick={props.update(increment, 2)} />
+  </div>
+));
 
-export default withUpdater(0)(Component);
+// Instead do the following:
+const increment = (state, step) => state + step;
+const incrementOne = state => increment(state, 1);
+const incrementTwo = state => increment(state, 2);
+
+withUpdater(0)(props => (
+  <div>
+    <h1>{props.state}</h1>
+    <button id={'first'} onClick={props.update(incrementOne)} />
+    <button id={'second'} onClick={props.update(incrementTwo)} />
+  </div>
+));
+
+// However if the attached data has the same value it is ok to do the following:
+const increment = (state, props) => state + props.step;
+
+withUpdater(0)(props => (
+  <div>
+    <h1>{props.state}</h1>
+    <button id={'first'} onClick={props.update(increment, props)} />
+    <button id={'second'} onClick={props.update(increment, props)} />
+  </div>
+));
 ```
 
 #### `handle()`
@@ -200,15 +229,18 @@ const count = (state = 0, action) => {
   }
 };
 
+const increment = state => count(state, 'INCREMENT');
+const decrement = state => count(state, 'DECREMENT');
+
 const Counter = props => (
   <div>
     <div>{props.state}</div>
 
-    <button onClick={props.update(count, 'DECREMENT')}>
+    <button onClick={props.update(decrement)}>
       {'-'}
     </button>
 
-    <button onClick={props.update(count, 'INCREMENT')}>
+    <button onClick={props.update(increment)}>
       {'+'}
     </button>
   </div>
