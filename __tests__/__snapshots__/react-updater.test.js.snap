@@ -4,11 +4,4 @@ exports[`Anonymous function warn 1`] = `"Callbacks handlers defined with anonymo
 
 exports[`Non-function callback error 1`] = `"The given callback of type object should be a function."`;
 
-exports[`memoizedCallbackHandlers collection 1`] = `
-Object {
-  "update[handler () => {}][]": Object {
-    "callback": [Function],
-    "handler": [Function],
-  },
-}
-`;
+exports[`memoizedCallbackHandlers collection 1`] = `WeakMap {}`;

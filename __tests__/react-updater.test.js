@@ -5,7 +5,6 @@
  */
 
 import { mount } from 'enzyme';
-import { noop } from '../src/utils';
 import React, { Component } from 'react';
 import withUpdater from '../src/index';
 
@@ -106,7 +105,7 @@ describe('withUpdater', () => {
       /* eslint-enable no-console */
 
       const Component = props => {
-        expect(props.update(null)).toBe(noop);
+        expect(props.update(null)()).toBeUndefined();
 
         return null;
       };
@@ -173,7 +172,7 @@ describe('withUpdater', () => {
       expect(handler.mock.calls[0][2]).toBe('bar');
     });
 
-    it('preserves the referencial identity on subsequent renders', () => {
+    it('preserves the referential identity on subsequent renders', () => {
       class Passthrough extends Component {
         componentWillReceiveProps(props) {
           expect(props.foo).toBe(this.props.foo);
@@ -193,7 +192,32 @@ describe('withUpdater', () => {
       wrapper.update();
     });
 
-    it('preserves the referencial identity of the handler if one of the handlers is removed', () => {
+    it('preserves the referential identity for different parameters', () => {
+      class Passthrough extends Component {
+        componentWillReceiveProps(props) {
+          expect(props.foo).toBe(this.props.foo);
+        }
+
+        render() {
+          return null;
+        }
+      }
+
+      const handler = () => {};
+      let count = 0;
+      const WrappedComponent = props => {
+        count++;
+
+        return <Passthrough foo={props.update(handler, count)} />;
+      };
+      const WithUpdater = withUpdater(0)(WrappedComponent);
+
+      const wrapper = mount(<WithUpdater />);
+
+      wrapper.update();
+    });
+
+    it('preserves the referential identity of the handler if one of the handlers is removed', () => {
       class Passthrough extends Component {
         componentWillReceiveProps(props) {
           expect(props.foo).toBe(this.props.foo);
@@ -268,14 +292,17 @@ describe('withUpdater', () => {
 
     it('updates the state accordingly if one of the handlers is removed', () => {
       const handler = (state, increment) => state + increment;
+      const handler1 = state => handler(state, 1);
+      const handler2 = state => handler(state, 2);
+
       const Passthrough = () => <div />;
       const WrappedComponent = props =>
         <div>
           {props.show
-            ? <div id={'bar'} onClick={props.update(handler, 2)} />
+            ? <div id={'bar'} onClick={props.update(handler2)} />
             : null}
 
-          <div id={'foo'} onClick={props.update(handler, 1)} />
+          <div id={'foo'} onClick={props.update(handler1)} />
 
           <Passthrough state={props.state} />
         </div>;
@@ -320,7 +347,36 @@ describe('withUpdater', () => {
       expect(wrapper.find('Passthrough').props().state).toBe(7);
     });
 
-    it('does not preserve the referencial identity of the handler on subsequent renders if the callback handler changes', () => {
+    it('updates the state accordingly for the same handler with different parameters', () => {
+      let count = 0;
+      const handler = (state, value) => state + value;
+      const Passthrough = () => <div />;
+      const WrappedComponent = props => {
+        count++;
+
+        return (
+          <div>
+            <button onClick={props.update(handler, count)} />
+            <Passthrough state={props.state} />
+          </div>
+        );
+      };
+      const WithUpdater = withUpdater(0)(WrappedComponent);
+
+      const wrapper = mount(<WithUpdater />);
+
+      expect(wrapper.find('Passthrough').props().state).toBe(0);
+
+      wrapper.find('button').simulate('click');
+
+      expect(wrapper.find('Passthrough').props().state).toBe(1);
+
+      wrapper.find('button').simulate('click');
+
+      expect(wrapper.find('Passthrough').props().state).toBe(3);
+    });
+
+    it('does not preserve the referential identity of the handler on subsequent renders if the callback handler changes', () => {
       class Passthrough extends Component {
         componentWillReceiveProps(props) {
           expect(props.foo).not.toBe(this.props.foo);
@@ -400,7 +456,7 @@ describe('withUpdater', () => {
       expect(wrapper.find('Passthrough').props().state).toBe(3);
     });
 
-    it('updates the state if it is not an object', () => {
+    it('updates the state if the initial state is not an object', () => {
       const Passthrough = () => <div />;
       const handler = state => state + 1;
       class Component extends React.Component {
@@ -419,7 +475,7 @@ describe('withUpdater', () => {
       expect(wrapper.find('Passthrough').props().state).toBe(1);
     });
 
-    it('updates the state if it is an object', () => {
+    it('updates the state if the initial state is an object', () => {
       const Passthrough = () => <div />;
       const handler = state => ({
         count: state.count + 1
@@ -442,12 +498,16 @@ describe('withUpdater', () => {
 
     it('updates the state accordingly', () => {
       const increment = (state, increment) => state + increment;
+      const increment1 = state => increment(state, 1);
+      const increment2 = state => increment(state, 2);
+      const increment3 = state => increment(state, 3);
+
       const Passthrough = () => <div />;
       const WrappedComponent = props =>
         <div>
-          <button id={'foo'} onClick={props.update(increment, 1)} />
-          <button id={'bar'} onClick={props.update(increment, 2)} />
-          <button id={'biz'} onClick={props.update(increment, 3)} />
+          <button id={'foo'} onClick={props.update(increment1)} />
+          <button id={'bar'} onClick={props.update(increment2)} />
+          <button id={'biz'} onClick={props.update(increment3)} />
 
           <Passthrough state={props.state} />
         </div>;
